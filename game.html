@@ -117,7 +117,12 @@
     "images/ship2.png",
     "images/trees2.png"
 ];
+let currentIndex = 0;
+  const imgEl = document.getElementById("gameImage");
 
+  // show the first image
+  imgEl.src = images[currentIndex];
+</script>
 
         // Duplicate to create pairs
         const cardImages = [...images, ...images];
