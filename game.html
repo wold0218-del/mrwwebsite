@@ -19,18 +19,27 @@
         }
 
         .card {
-            width: 130px;
-            height: 130px;
-            background: #fbeaf3;
-            border-radius: 10px;
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid rgba(0,0,0,0.06);
-        }
+    width: 130px;
+    height: 130px;
+
+    /* white & soft pink diagonal stripes for the FRONT side */
+    background: repeating-linear-gradient(
+        45deg,
+        #ffffff 0 12px,
+        rgba(242,166,207,0.22) 12px 24px
+    );
+
+    border-radius: 10px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(0,0,0,0.06);
+    transition: background 0.2s ease;
+}
+
 
         .card img {
             width: 90%;
