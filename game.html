@@ -18,15 +18,10 @@
             gap: 10px;
         }
 
-        /* Card styling: front side = white & pink stripes; back (flipped) will be colored via --card-color */
         .card {
             width: 130px;
             height: 130px;
-            background: repeating-linear-gradient(
-                45deg,
-                #ffffff 0 12px,
-                rgba(242,166,207,0.22) 12px 24px
-            );
+            background: #fbeaf3;
             border-radius: 10px;
             cursor: pointer;
             position: relative;
@@ -38,30 +33,14 @@
         }
 
         .card img {
-            width: 88%;
-            height: 88%;
-            display: none;
-            border-radius: 8px;
-            mix-blend-mode: multiply;
-            filter: grayscale(1) contrast(1.8) brightness(0.95) saturate(1.05)
-                    drop-shadow(0 0 0.6px rgba(0,0,0,0.9));
+            width: 90%;
+            height: 90%;
             object-fit: contain;
-            background: transparent;
-            position: relative;
-            z-index: 2;
-        }
-
-        .card.flipped {
-            background: var(--card-color, rgba(242,166,207,0.18));
-            border: 1px solid rgba(0,0,0,0.10);
+            display: none;
         }
 
         .card.flipped img {
-            mix-blend-mode: normal;
-            filter: contrast(1.45) saturate(1.2) brightness(1)
-                    drop-shadow(0 1px 0 rgba(0,0,0,0.6));
-            transform: translateZ(0);
-            z-index: 2;
+            display: block;
         }
 
         #message {
@@ -97,9 +76,9 @@
     <div id="game-board"></div>
     <p id="message"></p>
 
-    <!-- All your game JavaScript lives in this single script tag -->
+    <!-- ALL the JS lives in this one script tag -->
     <script>
-        // Just the filenames – the script will prepend "images/" itself
+        // Just the filenames – images are in the images/ folder
         const images = [
             "UMDbook3.png",
             "bulldog2.png",
@@ -111,13 +90,12 @@
             "trees2.png"
         ];
 
-        // Duplicate to create pairs
+        // Duplicate and shuffle
         const cardImages = [...images, ...images];
 
-        // Shuffle function
         function shuffle(array) {
             for (let i = array.length - 1; i > 0; i--) {
-                let j = Math.floor(Math.random() * (i + 1));
+                const j = Math.floor(Math.random() * (i + 1));
                 [array[i], array[j]] = [array[j], array[i]];
             }
         }
@@ -128,133 +106,20 @@
         let flippedCards = [];
         let matchedPairs = 0;
 
-        // Assign a pastel color per unique image (keeps consistent pairs the same color)
-        const palette = [
-            '#f2a6cf','#b7abff','#9be0ec','#ffd1a6',
-            '#c6f7d9','#ffd1e6','#e6d1ff','#c3e8ff'
-        ];
-
-        const colorMap = {};
-        images.forEach((name, i) => {
-            colorMap[name] = palette[i % palette.length];
-        });
-
-        // helper: create an outlined version of an image using edge detection (Sobel)
-        function makeOutlinedDataURL(src, thickness = 3) {
-            return new Promise((resolve) => {
-                const source = new Image();
-                source.crossOrigin = 'anonymous';
-
-                source.onload = () => {
-                    const w = source.naturalWidth;
-                    const h = source.naturalHeight;
-
-                    const srcCanvas = document.createElement('canvas');
-                    srcCanvas.width = w;
-                    srcCanvas.height = h;
-                    const sctx = srcCanvas.getContext('2d');
-                    sctx.drawImage(source, 0, 0, w, h);
-                    const srcData = sctx.getImageData(0,0,w,h);
-
-                    const gray = new Float32Array(w*h);
-                    for (let i=0;i<w*h;i++){
-                        const si = i*4;
-                        const r = srcData.data[si];
-                        const g = srcData.data[si+1];
-                        const b = srcData.data[si+2];
-                        const a = srcData.data[si+3];
-                        if (a < 20) { gray[i] = 255; continue; }
-                        gray[i] = 0.299*r + 0.587*g + 0.114*b;
-                    }
-
-                    const gx = new Float32Array(w*h);
-                    const gy = new Float32Array(w*h);
-
-                    for (let y=1;y<h-1;y++){
-                        for (let x=1;x<w-1;x++){
-                            const i = y*w + x;
-                            const v00 = gray[(y-1)*w + (x-1)];
-                            const v01 = gray[(y-1)*w + (x)];
-                            const v02 = gray[(y-1)*w + (x+1)];
-                            const v10 = gray[(y)*w + (x-1)];
-                            const v11 = gray[(y)*w + (x)];
-                            const v12 = gray[(y)*w + (x+1)];
-                            const v20 = gray[(y+1)*w + (x-1)];
-                            const v21 = gray[(y+1)*w + (x)];
-                            const v22 = gray[(y+1)*w + (x+1)];
-                            gx[i] = ( -v00 + v02 -2*v10 +2*v12 -v20 + v22 );
-                            gy[i] = ( -v00 -2*v01 -v02 + v20 +2*v21 + v22 );
-                        }
-                    }
-
-                    const mag = new Float32Array(w*h);
-                    let max = 0;
-                    for (let i=0;i<w*h;i++){
-                        mag[i] = Math.hypot(gx[i], gy[i]);
-                        if (mag[i] > max) max = mag[i];
-                    }
-                    const thresh = Math.max(20, max * 0.15);
-
-                    const outW = w + 2*thickness;
-                    const outH = h + 2*thickness;
-                    const outCanvas = document.createElement('canvas');
-                    outCanvas.width = outW;
-                    outCanvas.height = outH;
-                    const octx = outCanvas.getContext('2d');
-
-                    octx.fillStyle = 'black';
-                    octx.imageSmoothingEnabled = true;
-                    for (let y=0;y<h;y++){
-                        for (let x=0;x<w;x++){
-                            const i = y*w + x;
-                            if (mag[i] >= thresh) {
-                                octx.beginPath();
-                                octx.arc(x + thickness, y + thickness, thickness, 0, Math.PI*2);
-                                octx.fill();
-                            }
-                        }
-                    }
-
-                    octx.drawImage(source, thickness, thickness, w, h);
-                    resolve(outCanvas.toDataURL());
-                };
-
-                source.onerror = () => resolve(src);
-                source.src = src;
-            });
-        }
-
-        // Build the game board
-        async function buildBoard(thickness = 3, sensitivityPercent = 15) {
-            gameBoard.innerHTML = '';
+        // Build the board (simple version: just show the real images)
+        function buildBoard() {
+            gameBoard.innerHTML = "";
             flippedCards = [];
             matchedPairs = 0;
-            document.getElementById('message').textContent = '';
+            document.getElementById("message").textContent = "";
 
-            const sensitivity = Math.max(0.01, sensitivityPercent / 100);
-
-            for (const src of cardImages) {
+            cardImages.forEach((fileName) => {
                 const card = document.createElement("div");
                 card.classList.add("card");
 
-                const color = colorMap[src] || palette[0];
-                card.style.setProperty('--card-color', color);
-
                 const img = document.createElement("img");
-                img.alt = src.replace(/\.[^/.]+$/, '');
-
-                const originalSrc = "images/" + src;
-                const outlinedPath = "images/outlined/" + src;
-
-                img.src = outlinedPath;
-                img.onerror = async () => {
-                    try {
-                        const outlinedDataUrl = await makeOutlinedDataURL(originalSrc, thickness, sensitivity);
-                        img.src = outlinedDataUrl;
-                    } catch (e) {
-                        img.src = originalSrc;
-                    }
-                };
+                img.alt = fileName.replace(/\.[^/.]+$/, "");
+                img.src = "images/" + fileName;
 
                 card.appendChild(img);
 
@@ -270,10 +135,8 @@
                 });
 
                 gameBoard.appendChild(card);
-            }
+            });
         }
-
-        buildBoard(3, 15);
 
         function checkMatch() {
             const [card1, card2] = flippedCards;
@@ -296,6 +159,10 @@
                 }, 800);
             }
         }
+
+        buildBoard();
     </script>
 </body>
 </html>
+
+
