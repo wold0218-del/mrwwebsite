@@ -105,24 +105,40 @@
    <div id="game-board"></div>
    <p id="message"></p>
 
-   <script>
-        // Your EXACT drawing filenames
-        const images = [
-    "images/UMDbook3.png",
-    "images/bulldog2.png",
-    "images/gradhat2.png",
-    "images/lakesuperior2.png",
-    "images/liftbridge2.png",
-    "images/squirrel2.png",
-    "images/ship2.png",
-    "images/trees2.png"
-];
-let currentIndex = 0;
-  const imgEl = document.getElementById("gameImage");
+   <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Game Image Test</title>
+</head>
+<body>
+    <h1>Game Image Test</h1>
 
-  // show the first image
-  imgEl.src = images[currentIndex];
-</script>
+    <!-- This is where the image will appear -->
+    <img id="gameImage" alt="game image">
+
+    <!-- Put the script AFTER the img -->
+    <script>
+        const images = [
+            "images/UMDbook3.png",
+            "images/bulldog2.png",
+            "images/gradhat2.png",
+            "images/lakesuperior2.png",
+            "images/liftbridge2.png",
+            "images/squirrel2.png",
+            "images/ship2.png",
+            "images/trees2.png"
+        ];
+
+        let currentIndex = 0;
+        const imgEl = document.getElementById("gameImage");
+
+        // show the first image
+        imgEl.src = images[currentIndex];
+    </script>
+</body>
+</html>
+
 
         // Duplicate to create pairs
         const cardImages = [...images, ...images];
